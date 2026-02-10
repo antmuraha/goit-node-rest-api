@@ -24,6 +24,10 @@ export const updateContactSchema = Joi.object({
     phone: phone.required(),
 });
 
+export const updateFavoriteSchema = Joi.object({
+    favorite: Joi.boolean().required(),
+});
+
 export default {
     createContactSchema,
     updateContactSchema,
