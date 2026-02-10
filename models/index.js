@@ -16,6 +16,8 @@ const configModule = await import(path.resolve(__dirname, "../config/config.js")
 const config = (configModule.default || configModule)[env];
 const db = {};
 
+console.log(`Running in ${env} environment`);
+
 let sequelize;
 if (config.use_env_variable) {
     sequelize = new Sequelize(process.env[config.use_env_variable], config);
