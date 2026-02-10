@@ -50,6 +50,10 @@ export default {
         dialect: config.dialect,
         dialectOptions: {
             bigNumberStrings: true,
+            ssl: {
+                require: true,
+                rejectUnauthorized: false,
+            },
         },
     },
 };
