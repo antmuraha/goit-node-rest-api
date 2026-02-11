@@ -55,3 +55,15 @@ export const updateContact = async (req, res, next) => {
         next(error);
     }
 };
+
+export const updateStatusContact = async (req, res, next) => {
+    try {
+        const updatedContact = await contactsService.updateContact(req.params.id, req.body);
+        if (!updatedContact) {
+            return next(HttpError(HTTP_STATUS_CODES.NOT_FOUND));
+        }
+        res.status(HTTP_STATUS_CODES.SUCCESS).json(updatedContact);
+    } catch (error) {
+        next(error);
+    }
+};

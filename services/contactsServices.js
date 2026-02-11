@@ -1,12 +1,11 @@
-import fs from "fs/promises";
-import path from "node:path";
+import db from "../models/index.js";
 
-const contactsPath = path.join(process.cwd(), "db", "contacts.json");
+const Contact = db.Contact;
 
 export const listContacts = async () => {
     try {
-        const data = await fs.readFile(contactsPath, "utf-8");
-        return JSON.parse(data);
+        const contacts = await Contact.findAll();
+        return contacts;
     } catch (error) {
         console.error("Error reading contacts:", error);
         throw error;
@@ -15,8 +14,8 @@ export const listContacts = async () => {
 
 export const getContactById = async (contactId) => {
     try {
-        const contacts = await listContacts();
-        return contacts.find((contact) => contact.id == contactId) || null;
+        const contact = await Contact.findByPk(contactId);
+        return contact || null;
     } catch (error) {
         console.error("Error getting contact by ID:", error);
         throw error;
@@ -25,15 +24,11 @@ export const getContactById = async (contactId) => {
 
 export const addContact = async (name, email, phone) => {
     try {
-        const contacts = await listContacts();
-        const newContact = {
-            id: Date.now().toString(),
+        const newContact = await Contact.create({
             name,
             email,
             phone,
-        };
-        contacts.push(newContact);
-        await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+        });
         return newContact;
     } catch (error) {
         console.error("Error adding contact:", error);
@@ -43,12 +38,10 @@ export const addContact = async (name, email, phone) => {
 
 export const removeContact = async (contactId) => {
     try {
-        const contacts = await listContacts();
-        const index = contacts.findIndex((contact) => contact.id == contactId);
-        if (index === -1) return null;
-        const removedContact = contacts.splice(index, 1)[0];
-        await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-        return removedContact;
+        const contact = await Contact.findByPk(contactId);
+        if (!contact) return null;
+        await contact.destroy();
+        return contact;
     } catch (error) {
         console.error("Error removing contact:", error);
         throw error;
@@ -57,12 +50,10 @@ export const removeContact = async (contactId) => {
 
 export const updateContact = async (contactId, body) => {
     try {
-        const contacts = await listContacts();
-        const index = contacts.findIndex((contact) => contact.id == contactId);
-        if (index === -1) return null;
-        contacts[index] = { ...contacts[index], ...body };
-        await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-        return contacts[index];
+        const contact = await Contact.findByPk(contactId);
+        if (!contact) return null;
+        await contact.update(body);
+        return contact;
     } catch (error) {
         console.error("Error updating contact:", error);
         throw error;
