@@ -2,44 +2,53 @@ name: Security Audit (pnpm → SARIF)
 
 on:
   push:
+    # Run workflow when commits are pushed to master branch
     branches: [master]
   pull_request:
+    # Run workflow on pull requests targeting master
+    branches: [master]
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+
     permissions:
+      # Required to upload SARIF reports to GitHub Security
       contents: read
       security-events: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      # Checkout repository code
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-
+      # Install pnpm tool globally
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 8
 
+      # Setup Node.js 24 LTS and enable pnpm cache
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      # Install dependencies with frozen lockfile
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Generate audit report in JSON format
+      # Run pnpm audit and generate JSON output
+      # '|| true' prevents step failure so we handle severity manually
       - name: Run pnpm audit
         run: pnpm audit --json > audit.json || true
 
-      # Convert the audit report to SARIF format
+      # Convert audit JSON to SARIF format
+      # '--yes' ensures npx installs without prompts
       - name: Convert audit to SARIF
-        run: |
-          npx npm-audit-sarif audit.json > audit.sarif
+        run: npx --yes npm-audit-sarif audit.json > audit.sarif
 
-      # Upload the SARIF report to GitHub Security
+      # Upload SARIF file to GitHub Code Scanning
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
