@@ -1,0 +1,46 @@
+name: Security Audit (pnpm → SARIF)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Generate audit report in JSON format
+      - name: Run pnpm audit
+        run: pnpm audit --json > audit.json || true
+
+      # Convert the audit report to SARIF format
+      - name: Convert audit to SARIF
+        run: |
+          npx npm-audit-sarif audit.json > audit.sarif
+
+      # Upload the SARIF report to GitHub Security
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: audit.sarif
