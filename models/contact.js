@@ -1,11 +1,15 @@
 export default (sequelize, DataTypes) => {
-    return sequelize.define(
+    const Contact = sequelize.define(
         "Contact",
         {
             id: {
-                type: DataTypes.UUID,
-                defaultValue: DataTypes.UUIDV4,
+                type: DataTypes.INTEGER,
+                autoIncrement: true,
                 primaryKey: true,
+            },
+            owner: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
             },
             name: {
                 type: DataTypes.STRING,
@@ -29,4 +33,13 @@ export default (sequelize, DataTypes) => {
             timestamps: true,
         },
     );
+
+    Contact.associate = (models) => {
+        Contact.belongsTo(models.User, {
+            foreignKey: "owner",
+            as: "user",
+        });
+    };
+
+    return Contact;
 };
