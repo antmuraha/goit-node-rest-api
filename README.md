@@ -16,32 +16,34 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
 1. Clone or download the repository
 
 2. Install dependencies:
+
     ```bash
     pnpm install
     ```
 
-   Upload directories are already prepared in the repository:
-   - `temp/.gitkeep`
-   - `public/avatars/.gitkeep`
+    Upload directories are already prepared in the repository:
+    - `temp/.gitkeep`
+    - `public/avatars/.gitkeep`
 
-   The `.gitignore` keeps these folders in Git but ignores uploaded files.
+    The `.gitignore` keeps these folders in Git but ignores uploaded files.
 
 3. Create a `.env` file in the root directory:
+
     ```env
     # Application
     APP_PORT=3000
-    
+
     # PostgreSQL Database
     POSTGRES_USER=your_username
     POSTGRES_PASSWORD=your_password
     POSTGRES_DB=contacts_db
     POSTGRES_HOST=localhost
     POSTGRES_PORT=5432
-    
+
     # JWT Configuration
     JWT_SECRET=your-secret-key-for-jwt-tokens
     JWT_EXPIRES_IN=24h
-    
+
     # pgAdmin (for development)
     PGADMIN_DEFAULT_EMAIL=admin@example.com
     PGADMIN_DEFAULT_PASSWORD=admin
@@ -49,15 +51,17 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
     ```
 
 4. Start the PostgreSQL database with Docker Compose:
+
     ```bash
     # Using Docker
     docker-compose -f docker-compose.dev.yaml up -d
-    
+
     # Or using Podman
     podman-compose -f docker-compose.dev.yaml up -d
     ```
 
 5. Run database migrations:
+
     ```bash
     pnpm db:migrate
     ```
@@ -105,10 +109,10 @@ Creates a new user account.
 ```json
 {
     "user": {
-    "email": "user@example.com",
-    "subscription": "starter",
-    "avatarURL": "/avatars/1_1740692242338.jpg"
-  }
+        "email": "user@example.com",
+        "subscription": "starter",
+        "avatarURL": "/avatars/1_1740692242338.jpg"
+    }
 }
 ```
 
@@ -178,9 +182,9 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "email": "user@example.com",
-  "subscription": "starter",
-  "avatarURL": "/avatars/1_1740692242338.jpg"
+    "email": "user@example.com",
+    "subscription": "starter",
+    "avatarURL": "/avatars/1_1740692242338.jpg"
 }
 ```
 
@@ -205,7 +209,7 @@ Content-Type: multipart/form-data
 
 ```json
 {
-  "avatarURL": "/avatars/1_1740693324123.png"
+    "avatarURL": "/avatars/1_1740693324123.png"
 }
 ```
 
@@ -453,10 +457,12 @@ This project uses PostgreSQL database with Sequelize ORM. The development enviro
 #### 1. Database Setup with Docker Compose
 
 The `docker-compose.dev.yaml` file provides:
+
 - **PostgreSQL 18**: Main database server
 - **pgAdmin 4**: Web-based database administration tool
 
 Start the containers:
+
 ```bash
 # Using Docker
 docker-compose -f docker-compose.dev.yaml up -d
@@ -466,6 +472,7 @@ podman-compose -f docker-compose.dev.yaml up -d
 ```
 
 Stop the containers:
+
 ```bash
 docker-compose -f docker-compose.dev.yaml down
 # or
@@ -494,53 +501,56 @@ pnpm db:reset
 **Creating a new migration:**
 
 1. Generate a migration file:
-   ```bash
-   pnpm sequelize-cli migration:generate --name create-your-table
-   ```
+
+    ```bash
+    pnpm sequelize-cli migration:generate --name create-your-table
+    ```
 
 2. After generation, change the file extension to `.cjs` (CommonJS format)
 
 3. Edit the migration file to define your schema:
-   ```javascript
-   'use strict';
 
-   module.exports = {
-     async up(queryInterface, Sequelize) {
-       await queryInterface.createTable('YourTable', {
-         id: {
-           allowNull: false,
-           autoIncrement: true,
-           primaryKey: true,
-           type: Sequelize.INTEGER
-         },
-         // ... other fields
-         createdAt: {
-           allowNull: false,
-           type: Sequelize.DATE
-         },
-         updatedAt: {
-           allowNull: false,
-           type: Sequelize.DATE
-         }
-       });
-     },
+    ```javascript
+    "use strict";
 
-     async down(queryInterface, Sequelize) {
-       await queryInterface.dropTable('YourTable');
-     }
-   };
-   ```
+    module.exports = {
+        async up(queryInterface, Sequelize) {
+            await queryInterface.createTable("YourTable", {
+                id: {
+                    allowNull: false,
+                    autoIncrement: true,
+                    primaryKey: true,
+                    type: Sequelize.INTEGER,
+                },
+                // ... other fields
+                createdAt: {
+                    allowNull: false,
+                    type: Sequelize.DATE,
+                },
+                updatedAt: {
+                    allowNull: false,
+                    type: Sequelize.DATE,
+                },
+            });
+        },
+
+        async down(queryInterface, Sequelize) {
+            await queryInterface.dropTable("YourTable");
+        },
+    };
+    ```
 
 4. Run the migration:
-   ```bash
-   pnpm db:migrate
-   ```
+    ```bash
+    pnpm db:migrate
+    ```
 
 #### 3. Database Seeders
 
 Seeders populate the database with sample or initial data, useful for development and testing.
 
 **Run all seeders:**
+
 ```bash
 pnpm db:seed
 ```
@@ -548,49 +558,53 @@ pnpm db:seed
 **Creating a new seeder:**
 
 1. Generate a seeder file:
-   ```bash
-   pnpm sequelize-cli seed:generate --name your-seed-name
-   ```
+
+    ```bash
+    pnpm sequelize-cli seed:generate --name your-seed-name
+    ```
 
 2. Change the file extension to `.cjs`
 
 3. Edit the seeder file to insert data:
-   ```javascript
-   'use strict';
 
-   module.exports = {
-     async up(queryInterface, Sequelize) {
-       await queryInterface.bulkInsert('Contacts', [
-         {
-           name: 'John Doe',
-           email: 'john@example.com',
-           phone: '(123) 456-7890',
-           createdAt: new Date(),
-           updatedAt: new Date()
-         },
-         // ... more records
-       ]);
-     },
+    ```javascript
+    "use strict";
 
-     async down(queryInterface, Sequelize) {
-       await queryInterface.bulkDelete('Contacts', null, {});
-     }
-   };
-   ```
+    module.exports = {
+        async up(queryInterface, Sequelize) {
+            await queryInterface.bulkInsert("Contacts", [
+                {
+                    name: "John Doe",
+                    email: "john@example.com",
+                    phone: "(123) 456-7890",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                // ... more records
+            ]);
+        },
+
+        async down(queryInterface, Sequelize) {
+            await queryInterface.bulkDelete("Contacts", null, {});
+        },
+    };
+    ```
 
 #### 4. Database Administration
 
 **Access pgAdmin:**
+
 1. Open browser to `http://localhost:5050` (or the port specified in `.env`)
 2. Login with credentials from `.env` file:
-   - Email: `PGADMIN_DEFAULT_EMAIL`
-   - Password: `PGADMIN_DEFAULT_PASSWORD`
+    - Email: `PGADMIN_DEFAULT_EMAIL`
+    - Password: `PGADMIN_DEFAULT_PASSWORD`
 3. Add a new server connection:
-   - Host: `postgres` (container name) or `localhost` (from host machine)
-   - Port: `5432`
-   - Username/Password: From `.env` file
+    - Host: `postgres` (container name) or `localhost` (from host machine)
+    - Port: `5432`
+    - Username/Password: From `.env` file
 
 **Direct PostgreSQL access:**
+
 ```bash
 # Using Docker
 docker exec -it postgres psql -U your_username -d contacts_db
@@ -632,29 +646,33 @@ When adding a new model:
 4. Run migrations to update database schema
 
 **Example model structure:**
+
 ```javascript
 export default (sequelize, DataTypes) => {
-  const YourModel = sequelize.define('YourModel', {
-    // Define fields here
-  });
-  
-  return YourModel;
+    const YourModel = sequelize.define("YourModel", {
+        // Define fields here
+    });
+
+    return YourModel;
 };
 ```
 
 #### 7. Troubleshooting
 
 **Database connection issues:**
+
 - Ensure Docker/Podman containers are running
 - Check `.env` file for correct credentials
 - Verify PostgreSQL port is not in use by another service
 
 **Migration errors:**
+
 - Check migration file syntax
 - Ensure previous migrations executed successfully
 - Try `pnpm db:migrate:undo` and reapply
 
 **Reset database completely:**
+
 ```bash
 # Stop containers and remove volumes
 podman-compose -f docker-compose.dev.yaml down -v
@@ -678,6 +696,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 ```
 
 **Security features:**
+
 - Limited file system read access to project directory
 - Environment variables for sensitive credentials
 - Database connection validation before server start
@@ -709,6 +728,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Development Tools
 
 ### Backend Stack
+
 - **Express.js**: Web framework
 - **Sequelize**: PostgreSQL ORM
 - **JWT (jsonwebtoken)**: Token-based authentication
@@ -721,6 +741,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 - **dotenv**: Environment variable management
 
 ### Development Environment
+
 - **Nodemon**: Auto-reload during development
 - **Docker/Podman**: Container runtime
 - **pgAdmin**: Database administration interface
