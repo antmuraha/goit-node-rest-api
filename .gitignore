@@ -1,5 +1,7 @@
-temp/
-public/
+temp/*
+!temp/.gitkeep
+public/avatars/*
+!public/avatars/.gitkeep
 node_modules/
 .env
 .idea
