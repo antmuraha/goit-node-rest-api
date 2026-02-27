@@ -2,18 +2,20 @@
     "name": "goit-node-rest-api",
     "type": "module",
     "scripts": {
-        "start": "NODE_ENV=production node --permission --allow-fs-read=. ./app.js",
-        "dev": "nodemon --permission --allow-fs-read=. ./app.js",
+        "start": "NODE_ENV=production node ./app.js",
+        "dev": "NODE_ENV=development nodemon ./app.js",
         "db:migrate": "sequelize-cli db:migrate",
         "db:migrate:undo": "sequelize-cli db:migrate:undo",
         "db:seed": "sequelize-cli db:seed:all",
         "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate"
     },
     "dependencies": {
+        "bcrypt": "^6.0.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.4",
         "express": "^5.2.1",
         "joi": "^17.11.0",
+        "jsonwebtoken": "^9.0.3",
         "morgan": "^1.10.0",
         "pg": "^8.11.3",
         "sequelize": "^6.37.7"

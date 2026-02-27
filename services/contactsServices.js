@@ -2,9 +2,9 @@ import db from "../models/index.js";
 
 const Contact = db.Contact;
 
-export const listContacts = async () => {
+export const listContacts = async (owner) => {
     try {
-        const contacts = await Contact.findAll();
+        const contacts = await Contact.findAll({ where: { owner } });
         return contacts;
     } catch (error) {
         console.error("Error reading contacts:", error);
@@ -12,9 +12,9 @@ export const listContacts = async () => {
     }
 };
 
-export const getContactById = async (contactId) => {
+export const getContactById = async (owner, { id }) => {
     try {
-        const contact = await Contact.findByPk(contactId);
+        const contact = await Contact.findOne({ where: { id, owner } });
         return contact || null;
     } catch (error) {
         console.error("Error getting contact by ID:", error);
@@ -22,12 +22,13 @@ export const getContactById = async (contactId) => {
     }
 };
 
-export const addContact = async (name, email, phone) => {
+export const addContact = async (owner, { name, email, phone }) => {
     try {
         const newContact = await Contact.create({
             name,
             email,
             phone,
+            owner,
         });
         return newContact;
     } catch (error) {
@@ -36,9 +37,9 @@ export const addContact = async (name, email, phone) => {
     }
 };
 
-export const removeContact = async (contactId) => {
+export const removeContact = async (owner, { id }) => {
     try {
-        const contact = await Contact.findByPk(contactId);
+        const contact = await Contact.findOne({ where: { id, owner } });
         if (!contact) return null;
         await contact.destroy();
         return contact;
@@ -48,9 +49,9 @@ export const removeContact = async (contactId) => {
     }
 };
 
-export const updateContact = async (contactId, body) => {
+export const updateContact = async (owner, { id, ...body }) => {
     try {
-        const contact = await Contact.findByPk(contactId);
+        const contact = await Contact.findOne({ where: { id, owner } });
         if (!contact) return null;
         await contact.update(body);
         return contact;

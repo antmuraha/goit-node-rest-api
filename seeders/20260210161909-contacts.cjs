@@ -77,6 +77,11 @@ const contacts = [
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.bulkInsert("contacts", contacts, {});
+        
+        // Reset the sequence to the max ID
+        await queryInterface.sequelize.query(
+            "SELECT setval(pg_get_serial_sequence('contacts', 'id'), (SELECT MAX(id) FROM contacts));"
+        );
     },
 
     async down(queryInterface, Sequelize) {

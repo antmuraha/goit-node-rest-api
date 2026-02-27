@@ -84,7 +84,7 @@ Returns an array of all contacts.
 ```json
 [
     {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "id": 1,
         "name": "Chaim Lewis",
         "email": "dui.in@egetlacus.ca",
         "phone": "(294) 840-6685"
@@ -102,7 +102,7 @@ Returns a single contact by ID.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Chaim Lewis",
     "email": "dui.in@egetlacus.ca",
     "phone": "(294) 840-6685"
@@ -129,7 +129,7 @@ Creates a new contact.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Mango",
     "email": "mango@gmail.com",
     "phone": "(322) 222-2222"
@@ -186,7 +186,7 @@ Removes a contact by ID.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Chaim Lewis",
     "email": "dui.in@egetlacus.ca",
     "phone": "(294) 840-6685"
@@ -501,25 +501,30 @@ curl http://localhost:3000/api/contacts/1
 # Create a new contact
 curl -X POST http://localhost:3000/api/contacts \
   -H "Content-Type: application/json" \
+  -H "Authentication: Bearer ..." \
   -d '{"name":"Mango","email":"mango@gmail.com","phone":"(322) 222-2222"}'
 
 # Update contact (full)
-curl -X PUT http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PUT http://localhost:3000/api/contacts/1 \
   -H "Content-Type: application/json" \
+  -H "Authentication: Bearer ..." \
   -d '{"name":"Updated Name","email":"updated@email.com","phone":"(111) 222-3333"}'
 
 # Update contact (partial)
-curl -X PATCH http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PATCH http://localhost:3000/api/contacts/1 \
   -H "Content-Type: application/json" \
+  -H "Authentication: Bearer ..." \
   -d '{"phone":"(999) 888-7777"}'
 
 # Update contact favorite
-curl -X PATCH http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000/favorite \
+curl -X PATCH http://localhost:3000/api/contacts/1/favorite \
   -H "Content-Type: application/json" \
+  -H "Authentication: Bearer ..." \
   -d '{"favorite":true}'
 
 # Delete contact
-curl -X DELETE http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000
+curl -X DELETE http://localhost:3000/api/contacts/1 \
+  -H "Authentication: Bearer ..."
 ```
 
 ## Contributing
