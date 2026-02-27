@@ -4,8 +4,9 @@ import validatePaginationParams from "../helpers/validatePaginationParams.js";
 
 export const getAllContacts = async (req, res) => {
     const { page, limit } = validatePaginationParams(req.query);
+    const { favorite } = req.query;
     
-    const result = await contactsService.listContacts(req.user.id, { page, limit });
+    const result = await contactsService.listContacts(req.user.id, { page, limit, favorite });
     res.status(HTTP_STATUS_CODES.SUCCESS).json(result);
 };
 

@@ -8,8 +8,13 @@ export const listContacts = async (owner, options = {}) => {
         const limit = options.limit || 20;
         const offset = (page - 1) * limit;
         
+        const where = { owner };
+        if (options.favorite !== undefined) {
+            where.favorite = options.favorite === 'true';
+        }
+        
         const { rows } = await Contact.findAndCountAll({
-            where: { owner },
+            where,
             limit,
             offset,
             order: [["id", "DESC"]],
