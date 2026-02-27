@@ -10,11 +10,16 @@ export const register = async (email, password, subscription = "starter") => {
         // Hash password
         const hashedPassword = await hashPassword(password);
 
+        const { createGravatarUrl } = await import("./avatarServices.js");
+        // Generate gravatar URL
+        const avatarURL = createGravatarUrl(email);
+
         // Create user
         const newUser = await User.create({
             email,
             password: hashedPassword,
             subscription,
+            avatarURL,
         });
 
         // Return user without password
@@ -22,6 +27,7 @@ export const register = async (email, password, subscription = "starter") => {
             id: newUser.id,
             email: newUser.email,
             subscription: newUser.subscription,
+            avatarURL: newUser.avatarURL,
         };
     } catch (error) {
         // Check for unique constraint violation
@@ -57,6 +63,7 @@ export const login = async (email, password) => {
             user: {
                 email: user.email,
                 subscription: user.subscription,
+                avatarURL: user.avatarURL,
             },
         };
     } catch (error) {
@@ -99,9 +106,27 @@ export const findUserByToken = async (token) => {
     }
 };
 
+export const updateUserAvatar = async (userId, avatarURL) => {
+    try {
+        const user = await User.findByPk(userId);
+        if (!user) return null;
+
+        await user.update({ avatarURL });
+        return {
+            email: user.email,
+            subscription: user.subscription,
+            avatarURL: user.avatarURL,
+        };
+    } catch (error) {
+        console.error("Error updating user avatar:", error);
+        throw error;
+    }
+};
+
 export default {
     register,
     login,
     logout,
     findUserByToken,
+    updateUserAvatar,
 };

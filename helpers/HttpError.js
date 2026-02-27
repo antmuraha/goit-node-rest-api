@@ -6,6 +6,7 @@ export const HTTP_STATUS_CODES = {
     FORBIDDEN: 403,
     NOT_FOUND: 404,
     CONFLICT: 409,
+    INTERNAL_SERVER_ERROR: 500,
 };
 
 const messageList = {
@@ -14,6 +15,7 @@ const messageList = {
     [HTTP_STATUS_CODES.FORBIDDEN]: "Forbidden",
     [HTTP_STATUS_CODES.NOT_FOUND]: "Not Found",
     [HTTP_STATUS_CODES.CONFLICT]: "Conflict",
+    [HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR]: "Internal Server Error",
 };
 
 const HttpError = (status, message = messageList[status]) => {

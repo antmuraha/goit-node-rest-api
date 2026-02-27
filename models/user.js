@@ -25,6 +25,10 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 defaultValue: null,
             },
+            avatarURL: {
+                type: DataTypes.STRING,
+                defaultValue: null,
+            },
         },
         {
             tableName: "users",
