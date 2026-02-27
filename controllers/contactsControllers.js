@@ -1,9 +1,12 @@
 import contactsService from "../services/contactsServices.js";
 import HttpError, { HTTP_STATUS_CODES } from "../helpers/HttpError.js";
+import validatePaginationParams from "../helpers/validatePaginationParams.js";
 
 export const getAllContacts = async (req, res) => {
-    const contacts = await contactsService.listContacts(req.user.id);
-    res.status(HTTP_STATUS_CODES.SUCCESS).json(contacts);
+    const { page, limit } = validatePaginationParams(req.query);
+    
+    const result = await contactsService.listContacts(req.user.id, { page, limit });
+    res.status(HTTP_STATUS_CODES.SUCCESS).json(result);
 };
 
 export const getOneContact = async (req, res, next) => {

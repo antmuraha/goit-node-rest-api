@@ -2,10 +2,24 @@ import db from "../models/index.js";
 
 const Contact = db.Contact;
 
-export const listContacts = async (owner) => {
+export const listContacts = async (owner, options = {}) => {
     try {
-        const contacts = await Contact.findAll({ where: { owner } });
-        return contacts;
+        const page = options.page || 1;
+        const limit = options.limit || 20;
+        const offset = (page - 1) * limit;
+        
+        const { rows } = await Contact.findAndCountAll({
+            where: { owner },
+            limit,
+            offset,
+            order: [["id", "DESC"]],
+        });
+        
+        return {
+            data: rows,
+            page,
+            limit,
+        };
     } catch (error) {
         console.error("Error reading contacts:", error);
         throw error;
