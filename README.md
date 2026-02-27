@@ -1,6 +1,6 @@
 # GoIT Homework. Contact Management REST API
 
-A Node.js REST API application for managing contacts with PostgreSQL database and Sequelize ORM. Built with Express.js as an educational project for the GoIT Fullstack Backend Development course.
+A Node.js REST API application for managing contacts with PostgreSQL database and Sequelize ORM. Built with Express.js as an educational project for the GoIT Fullstack Backend Development course. Includes JWT authentication, user avatars (Gravatar + file upload), and contact CRUD with pagination.
 
 > **⚠️ Note:** This is a learning project and not suitable for production environments.
 
@@ -19,6 +19,12 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
     ```bash
     pnpm install
     ```
+
+   Upload directories are already prepared in the repository:
+   - `temp/.gitkeep`
+   - `public/avatars/.gitkeep`
+
+   The `.gitignore` keeps these folders in Git but ignores uploaded files.
 
 3. Create a `.env` file in the root directory:
     ```env
@@ -99,12 +105,14 @@ Creates a new user account.
 ```json
 {
     "user": {
-        "id": 1,
-        "email": "user@example.com"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "email": "user@example.com",
+    "subscription": "starter",
+    "avatarURL": "/avatars/1_1740692242338.jpg"
+  }
 }
 ```
+
+After registration, the server automatically downloads a Gravatar image (or default identicon) and stores it locally in `public/avatars`.
 
 **Validation rules:**
 
@@ -132,7 +140,9 @@ Authenticates user and returns JWT token.
 {
     "user": {
         "id": 1,
-        "email": "user@example.com"
+        "email": "user@example.com",
+        "subscription": "starter",
+        "avatarURL": "/avatars/1_1740692242338.jpg"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
@@ -168,10 +178,38 @@ Authorization: Bearer <token>
 
 ```json
 {
-    "id": 1,
-    "email": "user@example.com"
+  "email": "user@example.com",
+  "subscription": "starter",
+  "avatarURL": "/avatars/1_1740692242338.jpg"
 }
 ```
+
+#### Update user avatar
+
+**PATCH** `/api/auth/avatars`
+
+Uploads a new avatar image for the authenticated user.
+
+**Headers:**
+
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Form-data:**
+
+- `avatar` (required): image file (`jpg`, `png`, `gif`), max size `1MB`
+
+**Response:** `200 OK`
+
+```json
+{
+  "avatarURL": "/avatars/1_1740693324123.png"
+}
+```
+
+Avatars are publicly accessible via static files, for example: `http://localhost:3000/avatars/1_1740693324123.png`.
 
 ### Contacts
 
@@ -367,7 +405,8 @@ Removes a contact by ID.
 ├── app.js                        # Application entry point
 ├── config/
 │   ├── config.js                 # Sequelize database configuration
-│   └── jwtConfig.js              # JWT configuration
+│   ├── jwtConfig.js              # JWT configuration
+│   └── multerConfig.js           # Multer config for avatar uploads
 ├── controllers/
 │   ├── authControllers.js        # Authentication request handlers
 │   └── contactsControllers.js    # Contact request handlers
@@ -376,6 +415,7 @@ Removes a contact by ID.
 │   └── contactsRouter.js         # Contact routes
 ├── services/
 │   ├── authServices.js           # Authentication business logic
+│   ├── avatarServices.js         # Gravatar download and avatar helpers
 │   └── contactsServices.js       # Contact business logic
 ├── models/
 │   ├── index.js                  # Sequelize initialization
@@ -383,7 +423,8 @@ Removes a contact by ID.
 │   └── contact.js                # Contact model definition
 ├── migrations/
 │   ├── 20260210142425-create-users.cjs      # User table migration
-│   └── 20260211203950-create-contacts.cjs   # Contact table migration
+│   ├── 20260211203950-create-contacts.cjs   # Contact table migration
+│   └── 20260227120000-add-avatar-url-to-users.cjs # Adds avatarURL to users
 ├── seeders/
 │   ├── 20260210161908-users.cjs        # Sample user data
 │   └── 20260210161909-contacts.cjs     # Sample contact data
@@ -397,6 +438,9 @@ Removes a contact by ID.
 │   ├── validateBody.js           # Request body validation middleware
 │   └── validatePaginationParams.js  # Pagination validation
 ├── middleware/
+├── public/
+│   └── avatars/                  # Stored user avatars (served statically)
+├── temp/                         # Temporary upload directory
 └── docker-compose.dev.yaml       # Docker setup for PostgreSQL & pgAdmin
 ```
 
@@ -431,6 +475,8 @@ podman-compose -f docker-compose.dev.yaml down
 #### 2. Database Migrations
 
 Sequelize migrations manage database schema changes. Migrations are versioned and allow you to evolve your database schema over time.
+
+Current migrations include users, contacts, and `avatarURL` column for users.
 
 **Available migration commands:**
 
@@ -642,6 +688,10 @@ nodemon --permission --allow-fs-read=. ./app.js
 
 - ✅ RESTful API architecture
 - ✅ JWT user authentication (register, login, logout)
+- ✅ Current user endpoint with avatar URL
+- ✅ Automatic Gravatar download on registration
+- ✅ Avatar upload endpoint with multipart/form-data (`PATCH /api/auth/avatars`)
+- ✅ Static avatar hosting from `public/avatars`
 - ✅ User-based contact management
 - ✅ Full CRUD operations for contacts
 - ✅ Pagination support with customizable page size
@@ -663,6 +713,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 - **Sequelize**: PostgreSQL ORM
 - **JWT (jsonwebtoken)**: Token-based authentication
 - **bcrypt**: Password hashing
+- **Multer**: Multipart file upload handling for avatars
 - **PostgreSQL**: Relational database
 - **Joi**: Schema validation
 - **Morgan**: HTTP request logger
@@ -678,7 +729,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Example Usage with cURL
 
 ```bash
-# Registration
+# Registration (avatar is generated automatically from Gravatar)
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"securePassword123"}'
@@ -691,6 +742,11 @@ curl -X POST http://localhost:3000/api/auth/login \
 # Get current user (replace TOKEN with actual JWT token)
 curl http://localhost:3000/api/auth/current \
   -H "Authorization: Bearer TOKEN"
+
+# Upload custom avatar
+curl -X PATCH http://localhost:3000/api/auth/avatars \
+  -H "Authorization: Bearer TOKEN" \
+  -F "avatar=@/absolute/path/to/avatar.png"
 
 # Get all contacts with pagination
 curl "http://localhost:3000/api/contacts?page=1&limit=20" \
