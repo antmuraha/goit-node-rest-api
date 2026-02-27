@@ -2,27 +2,26 @@ import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 import { hashPassword, comparePassword } from "../helpers/hashPassword.js";
 import { jwtConfig } from "../config/jwtConfig.js";
+import { downloadGravatarToLocal } from "./avatarServices.js";
 
 const User = db.User;
 
 export const register = async (email, password, subscription = "starter") => {
     try {
-        // Hash password
         const hashedPassword = await hashPassword(password);
 
-        const { createGravatarUrl } = await import("./avatarServices.js");
-        // Generate gravatar URL
-        const avatarURL = createGravatarUrl(email);
-
-        // Create user
         const newUser = await User.create({
             email,
             password: hashedPassword,
             subscription,
-            avatarURL,
+            avatarURL: null,
         });
 
-        // Return user without password
+        const avatarURL = await downloadGravatarToLocal(email, newUser.id);
+        if (avatarURL) {
+            await newUser.update({ avatarURL });
+        }
+
         return {
             id: newUser.id,
             email: newUser.email,

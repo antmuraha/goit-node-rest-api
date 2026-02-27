@@ -1,5 +1,7 @@
 import authService from "../services/authServices.js";
 import HttpError, { HTTP_STATUS_CODES } from "../helpers/HttpError.js";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
 export const register = async (req, res, next) => {
     const { email, password } = req.body;
@@ -61,11 +63,10 @@ export const updateAvatar = async (req, res, next) => {
     const userId = req.user.id;
     const ext = tempFilename.substring(tempFilename.lastIndexOf("."));
     const newFilename = `${userId}_${Date.now()}${ext}`;
-    const publicPath = `public/avatars/${newFilename}`;
+    const publicPath = path.resolve("public", "avatars", newFilename);
 
     try {
         // Move file from temp to public/avatars
-        const fs = await import("fs").then((m) => m.promises);
         await fs.rename(tempPath, publicPath);
 
         // Update user avatar URL in database

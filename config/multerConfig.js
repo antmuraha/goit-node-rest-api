@@ -1,12 +1,12 @@
 import multer from "multer";
 import path from "path";
 
-const TEMP_DIR = "temp/";
+export const AVATARS_TEMP_DIR = "temp/";
 const FILE_SIZE_LIMIT = 1 * 1024 * 1024; // 1 MB
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, TEMP_DIR);
+        cb(null, AVATARS_TEMP_DIR);
     },
     filename: (req, file, cb) => {
         // Generate filename with timestamp: userid_timestamp.ext
