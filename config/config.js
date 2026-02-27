@@ -50,10 +50,10 @@ export default {
         dialect: config.dialect,
         dialectOptions: {
             bigNumberStrings: true,
-            ssl: {
+            ssl: process.env.POSTGRES_SSL === "true" ?{
                 require: true,
                 rejectUnauthorized: false,
-            },
+            } : undefined,
         },
     },
 };

@@ -10,7 +10,7 @@ import process from "process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const env = process.env.NODE_ENV || "development";
+const env = process.env.NODE_ENV || "production";
 const basename = path.basename(__filename);
 const configModule = await import(path.resolve(__dirname, "../config/config.js"));
 const config = (configModule.default || configModule)[env];

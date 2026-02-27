@@ -5,10 +5,19 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable("contacts", {
             id: {
-                type: Sequelize.UUID,
-                defaultValue: Sequelize.UUIDV4,
+                type: Sequelize.INTEGER,
+                autoIncrement: true,
                 primaryKey: true,
+            },
+            owner: {
+                type: Sequelize.INTEGER,
                 allowNull: false,
+                references: {
+                    model: "users",
+                    key: "id",
+                },
+                onUpdate: "CASCADE",
+                onDelete: "CASCADE",
             },
             name: {
                 type: Sequelize.STRING,

@@ -1,45 +1,43 @@
 export default (sequelize, DataTypes) => {
-    const Contact = sequelize.define(
-        "Contact",
+    const User = sequelize.define(
+        "User",
         {
             id: {
                 type: DataTypes.INTEGER,
                 autoIncrement: true,
                 primaryKey: true,
             },
-            owner: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-            },
-            name: {
+            password: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
             email: {
                 type: DataTypes.STRING,
                 allowNull: false,
+                unique: true,
             },
-            phone: {
+            subscription: {
+                type: DataTypes.ENUM,
+                values: ["starter", "pro", "business"],
+                defaultValue: "starter",
+            },
+            token: {
                 type: DataTypes.STRING,
-                allowNull: false,
-            },
-            favorite: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
+                defaultValue: null,
             },
         },
         {
-            tableName: "contacts",
+            tableName: "users",
             timestamps: true,
         },
     );
 
-    Contact.associate = (models) => {
-        Contact.belongsTo(models.User, {
+    User.associate = (models) => {
+        User.hasMany(models.Contact, {
             foreignKey: "owner",
-            as: "user",
+            as: "contacts",
         });
     };
 
-    return Contact;
+    return User;
 };

@@ -32,6 +32,10 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
     POSTGRES_HOST=localhost
     POSTGRES_PORT=5432
     
+    # JWT Configuration
+    JWT_SECRET=your-secret-key-for-jwt-tokens
+    JWT_EXPIRES_IN=24h
+    
     # pgAdmin (for development)
     PGADMIN_DEFAULT_EMAIL=admin@example.com
     PGADMIN_DEFAULT_PASSWORD=admin
@@ -73,26 +77,141 @@ The API will be available at `http://localhost:3000`
 
 ## API Endpoints
 
-### Get all contacts
+### Authentication
 
-**GET** `/api/contacts`
+#### Register a new user
 
-Returns an array of all contacts.
+**POST** `/api/auth/register`
+
+Creates a new user account.
+
+**Request body:**
+
+```json
+{
+    "email": "user@example.com",
+    "password": "securePassword123"
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+    "user": {
+        "id": 1,
+        "email": "user@example.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Validation rules:**
+
+- `email` (required): valid email format
+- `password` (required): minimum 6 characters
+
+#### Login
+
+**POST** `/api/auth/login`
+
+Authenticates user and returns JWT token.
+
+**Request body:**
+
+```json
+{
+    "email": "user@example.com",
+    "password": "securePassword123"
+}
+```
 
 **Response:** `200 OK`
 
 ```json
-[
-    {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "name": "Chaim Lewis",
-        "email": "dui.in@egetlacus.ca",
-        "phone": "(294) 840-6685"
-    }
-]
+{
+    "user": {
+        "id": 1,
+        "email": "user@example.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
 ```
 
-### Get contact by ID
+#### Logout
+
+**POST** `/api/auth/logout`
+
+Logs out the current user.
+
+**Headers:**
+
+```
+Authorization: Bearer <token>
+```
+
+**Response:** `204 No Content`
+
+#### Get current user
+
+**GET** `/api/auth/current`
+
+Returns information about the authenticated user.
+
+**Headers:**
+
+```
+Authorization: Bearer <token>
+```
+
+**Response:** `200 OK`
+
+```json
+{
+    "id": 1,
+    "email": "user@example.com"
+}
+```
+
+### Contacts
+
+All contact endpoints require authentication. Include the JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <token>
+```
+
+#### Get all contacts
+
+**GET** `/api/contacts?page=1&limit=20&favorite=false`
+
+Returns an array of contacts for the authenticated user with pagination support and optional favorite filtering.
+
+**Query Parameters:**
+
+- `page` (optional): Page number for pagination, default is `1`
+- `limit` (optional): Number of contacts per page, default is `20`
+- `favorite` (optional): Filter by favorite status - either `true` or `false`
+
+**Response:** `200 OK`
+
+```json
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Chaim Lewis",
+            "email": "dui.in@egetlacus.ca",
+            "phone": "(294) 840-6685",
+            "favorite": false
+        }
+    ],
+    "page": 1,
+    "limit": 20
+}
+```
+
+#### Get contact by ID
 
 **GET** `/api/contacts/:id`
 
@@ -102,18 +221,19 @@ Returns a single contact by ID.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Chaim Lewis",
     "email": "dui.in@egetlacus.ca",
-    "phone": "(294) 840-6685"
+    "phone": "(294) 840-6685",
+    "favorite": false
 }
 ```
 
-### Create a new contact
+#### Create a new contact
 
 **POST** `/api/contacts`
 
-Creates a new contact.
+Creates a new contact for the authenticated user.
 
 **Request body:**
 
@@ -129,10 +249,11 @@ Creates a new contact.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Mango",
     "email": "mango@gmail.com",
-    "phone": "(322) 222-2222"
+    "phone": "(322) 222-2222",
+    "favorite": false
 }
 ```
 
@@ -142,11 +263,11 @@ Creates a new contact.
 - `email` (required): valid email format
 - `phone` (required): format `(XXX) XXX-XXXX`
 
-### Update a contact (full update)
+#### Update a contact (full update)
 
 **PUT** `/api/contacts/:id`
 
-Updates all fields of an existing contact.
+Updates all fields of an existing contact. All fields are required.
 
 **Request body:** (all fields required)
 
@@ -160,11 +281,21 @@ Updates all fields of an existing contact.
 
 **Response:** `200 OK` or `404 Not Found`
 
-### Update a contact (partial update)
+```json
+{
+    "id": 1,
+    "name": "Updated Name",
+    "email": "updated@email.com",
+    "phone": "(111) 222-3333",
+    "favorite": false
+}
+```
+
+#### Update a contact (partial update)
 
 **PATCH** `/api/contacts/:id`
 
-Updates one or more fields of an existing contact.
+Updates one or more fields of an existing contact. At least one field is required.
 
 **Request body:** (at least one field required)
 
@@ -176,7 +307,43 @@ Updates one or more fields of an existing contact.
 
 **Response:** `200 OK` or `404 Not Found`
 
-### Delete a contact
+```json
+{
+    "id": 1,
+    "name": "Updated Name",
+    "email": "updated@email.com",
+    "phone": "(999) 888-7777",
+    "favorite": false
+}
+```
+
+#### Update contact favorite status
+
+**PATCH** `/api/contacts/:id/favorite`
+
+Updates the favorite status of a contact.
+
+**Request body:**
+
+```json
+{
+    "favorite": true
+}
+```
+
+**Response:** `200 OK` or `404 Not Found`
+
+```json
+{
+    "id": 1,
+    "name": "Chaim Lewis",
+    "email": "dui.in@egetlacus.ca",
+    "phone": "(294) 840-6685",
+    "favorite": true
+}
+```
+
+#### Delete a contact
 
 **DELETE** `/api/contacts/:id`
 
@@ -186,10 +353,11 @@ Removes a contact by ID.
 
 ```json
 {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": 1,
     "name": "Chaim Lewis",
     "email": "dui.in@egetlacus.ca",
-    "phone": "(294) 840-6685"
+    "phone": "(294) 840-6685",
+    "favorite": false
 }
 ```
 
@@ -198,25 +366,37 @@ Removes a contact by ID.
 ```
 ├── app.js                        # Application entry point
 ├── config/
-│   └── config.js                 # Sequelize database configuration
+│   ├── config.js                 # Sequelize database configuration
+│   └── jwtConfig.js              # JWT configuration
 ├── controllers/
-│   └── contactsControllers.js    # Request handlers
+│   ├── authControllers.js        # Authentication request handlers
+│   └── contactsControllers.js    # Contact request handlers
 ├── routes/
-│   └── contactsRouter.js         # Route definitions
+│   ├── authRouter.js             # Authentication routes
+│   └── contactsRouter.js         # Contact routes
 ├── services/
-│   └── contactsServices.js       # Business logic layer
+│   ├── authServices.js           # Authentication business logic
+│   └── contactsServices.js       # Contact business logic
 ├── models/
 │   ├── index.js                  # Sequelize initialization
+│   ├── user.js                   # User model definition
 │   └── contact.js                # Contact model definition
 ├── migrations/
-│   └── 20260210142425-create-contacts.cjs  # Database schema migrations
+│   ├── 20260210142425-create-users.cjs      # User table migration
+│   └── 20260211203950-create-contacts.cjs   # Contact table migration
 ├── seeders/
-│   └── 20260210161909-contacts.cjs         # Sample data seeders
+│   ├── 20260210161908-users.cjs        # Sample user data
+│   └── 20260210161909-contacts.cjs     # Sample contact data
 ├── schemas/
-│   └── contactsSchemas.js        # Joi validation schemas
+│   ├── authSchemas.js            # Joi validation schemas for auth
+│   └── contactsSchemas.js        # Joi validation schemas for contacts
 ├── helpers/
+│   ├── authenticate.js           # JWT authentication middleware
+│   ├── hashPassword.js           # Password hashing utility
 │   ├── HttpError.js              # Error handling utility
-│   └── validateBody.js           # Validation middleware
+│   ├── validateBody.js           # Request body validation middleware
+│   └── validatePaginationParams.js  # Pagination validation
+├── middleware/
 └── docker-compose.dev.yaml       # Docker setup for PostgreSQL & pgAdmin
 ```
 
@@ -461,14 +641,18 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Features
 
 - ✅ RESTful API architecture
+- ✅ JWT user authentication (register, login, logout)
+- ✅ User-based contact management
 - ✅ Full CRUD operations for contacts
+- ✅ Pagination support with customizable page size
+- ✅ Favorite contacts filtering
 - ✅ PostgreSQL database with Sequelize ORM
 - ✅ Database migrations and seeders
 - ✅ Docker Compose for development environment
 - ✅ Request validation with Joi
-- ✅ Error handling middleware
+- ✅ Enhanced error handling with Sequelize support
 - ✅ CORS enabled
-- ✅ Request logging with Morgan
+- ✅ Request logging with Morgan (dev and production modes)
 - ✅ Node.js permission model security
 - ✅ pgAdmin for database administration
 
@@ -477,6 +661,8 @@ nodemon --permission --allow-fs-read=. ./app.js
 ### Backend Stack
 - **Express.js**: Web framework
 - **Sequelize**: PostgreSQL ORM
+- **JWT (jsonwebtoken)**: Token-based authentication
+- **bcrypt**: Password hashing
 - **PostgreSQL**: Relational database
 - **Joi**: Schema validation
 - **Morgan**: HTTP request logger
@@ -492,34 +678,63 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Example Usage with cURL
 
 ```bash
-# Get all contacts
-curl http://localhost:3000/api/contacts
+# Registration
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"securePassword123"}'
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"securePassword123"}'
+
+# Get current user (replace TOKEN with actual JWT token)
+curl http://localhost:3000/api/auth/current \
+  -H "Authorization: Bearer TOKEN"
+
+# Get all contacts with pagination
+curl "http://localhost:3000/api/contacts?page=1&limit=20" \
+  -H "Authorization: Bearer TOKEN"
+
+# Get contacts with favorite filter
+curl "http://localhost:3000/api/contacts?page=1&limit=20&favorite=true" \
+  -H "Authorization: Bearer TOKEN"
 
 # Get contact by ID
-curl http://localhost:3000/api/contacts/1
+curl http://localhost:3000/api/contacts/1 \
+  -H "Authorization: Bearer TOKEN"
 
 # Create a new contact
 curl -X POST http://localhost:3000/api/contacts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
   -d '{"name":"Mango","email":"mango@gmail.com","phone":"(322) 222-2222"}'
 
 # Update contact (full)
-curl -X PUT http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PUT http://localhost:3000/api/contacts/1 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
   -d '{"name":"Updated Name","email":"updated@email.com","phone":"(111) 222-3333"}'
 
 # Update contact (partial)
-curl -X PATCH http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PATCH http://localhost:3000/api/contacts/1 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
   -d '{"phone":"(999) 888-7777"}'
 
-# Update contact favorite
-curl -X PATCH http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000/favorite \
+# Update contact favorite status
+curl -X PATCH http://localhost:3000/api/contacts/1/favorite \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
   -d '{"favorite":true}'
 
 # Delete contact
-curl -X DELETE http://localhost:3000/api/contacts/550e8400-e29b-41d4-a716-446655440000
+curl -X DELETE http://localhost:3000/api/contacts/1 \
+  -H "Authorization: Bearer TOKEN"
+
+# Logout
+curl -X POST http://localhost:3000/api/auth/logout \
+  -H "Authorization: Bearer TOKEN"
 ```
 
 ## Contributing
