@@ -1,5 +1,7 @@
 import authService from "../services/authServices.js";
 import HttpError, { HTTP_STATUS_CODES } from "../helpers/HttpError.js";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
 export const register = async (req, res, next) => {
     const { email, password } = req.body;
@@ -14,6 +16,7 @@ export const register = async (req, res, next) => {
         user: {
             email: newUser.email,
             subscription: newUser.subscription,
+            avatarURL: newUser.avatarURL,
         },
     });
 };
@@ -47,7 +50,36 @@ export const getCurrentUser = async (req, res) => {
     res.status(HTTP_STATUS_CODES.SUCCESS).json({
         email: req.user.email,
         subscription: req.user.subscription,
+        avatarURL: req.user.avatarURL,
     });
+};
+
+export const updateAvatar = async (req, res, next) => {
+    if (!req.file) {
+        return next(HttpError(HTTP_STATUS_CODES.BAD_REQUEST, "No file uploaded"));
+    }
+
+    const { path: tempPath, filename: tempFilename } = req.file;
+    const userId = req.user.id;
+    const ext = tempFilename.substring(tempFilename.lastIndexOf("."));
+    const newFilename = `${userId}_${Date.now()}${ext}`;
+    const publicPath = path.resolve("public", "avatars", newFilename);
+
+    try {
+        // Move file from temp to public/avatars
+        await fs.rename(tempPath, publicPath);
+
+        // Update user avatar URL in database
+        const avatarURL = `/avatars/${newFilename}`;
+        const result = await authService.updateUserAvatar(userId, avatarURL);
+
+        res.status(HTTP_STATUS_CODES.SUCCESS).json({
+            avatarURL: result.avatarURL,
+        });
+    } catch (error) {
+        console.error("Error updating avatar:", error);
+        next(HttpError(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR, "Failed to update avatar"));
+    }
 };
 
 export default {
@@ -55,4 +87,5 @@ export default {
     login,
     logout,
     getCurrentUser,
+    updateAvatar,
 };

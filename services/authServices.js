@@ -2,26 +2,31 @@ import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 import { hashPassword, comparePassword } from "../helpers/hashPassword.js";
 import { jwtConfig } from "../config/jwtConfig.js";
+import { downloadGravatarToLocal } from "./avatarServices.js";
 
 const User = db.User;
 
 export const register = async (email, password, subscription = "starter") => {
     try {
-        // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Create user
         const newUser = await User.create({
             email,
             password: hashedPassword,
             subscription,
+            avatarURL: null,
         });
 
-        // Return user without password
+        const avatarURL = await downloadGravatarToLocal(email, newUser.id);
+        if (avatarURL) {
+            await newUser.update({ avatarURL });
+        }
+
         return {
             id: newUser.id,
             email: newUser.email,
             subscription: newUser.subscription,
+            avatarURL: newUser.avatarURL,
         };
     } catch (error) {
         // Check for unique constraint violation
@@ -57,6 +62,7 @@ export const login = async (email, password) => {
             user: {
                 email: user.email,
                 subscription: user.subscription,
+                avatarURL: user.avatarURL,
             },
         };
     } catch (error) {
@@ -99,9 +105,27 @@ export const findUserByToken = async (token) => {
     }
 };
 
+export const updateUserAvatar = async (userId, avatarURL) => {
+    try {
+        const user = await User.findByPk(userId);
+        if (!user) return null;
+
+        await user.update({ avatarURL });
+        return {
+            email: user.email,
+            subscription: user.subscription,
+            avatarURL: user.avatarURL,
+        };
+    } catch (error) {
+        console.error("Error updating user avatar:", error);
+        throw error;
+    }
+};
+
 export default {
     register,
     login,
     logout,
     findUserByToken,
+    updateUserAvatar,
 };

@@ -1,6 +1,6 @@
 # GoIT Homework. Contact Management REST API
 
-A Node.js REST API application for managing contacts with PostgreSQL database and Sequelize ORM. Built with Express.js as an educational project for the GoIT Fullstack Backend Development course.
+A Node.js REST API application for managing contacts with PostgreSQL database and Sequelize ORM. Built with Express.js as an educational project for the GoIT Fullstack Backend Development course. Includes JWT authentication, user avatars (Gravatar + file upload), and contact CRUD with pagination.
 
 > **⚠️ Note:** This is a learning project and not suitable for production environments.
 
@@ -16,26 +16,34 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
 1. Clone or download the repository
 
 2. Install dependencies:
+
     ```bash
     pnpm install
     ```
 
+    Upload directories are already prepared in the repository:
+    - `temp/.gitkeep`
+    - `public/avatars/.gitkeep`
+
+    The `.gitignore` keeps these folders in Git but ignores uploaded files.
+
 3. Create a `.env` file in the root directory:
+
     ```env
     # Application
     APP_PORT=3000
-    
+
     # PostgreSQL Database
     POSTGRES_USER=your_username
     POSTGRES_PASSWORD=your_password
     POSTGRES_DB=contacts_db
     POSTGRES_HOST=localhost
     POSTGRES_PORT=5432
-    
+
     # JWT Configuration
     JWT_SECRET=your-secret-key-for-jwt-tokens
     JWT_EXPIRES_IN=24h
-    
+
     # pgAdmin (for development)
     PGADMIN_DEFAULT_EMAIL=admin@example.com
     PGADMIN_DEFAULT_PASSWORD=admin
@@ -43,15 +51,17 @@ A Node.js REST API application for managing contacts with PostgreSQL database an
     ```
 
 4. Start the PostgreSQL database with Docker Compose:
+
     ```bash
     # Using Docker
     docker-compose -f docker-compose.dev.yaml up -d
-    
+
     # Or using Podman
     podman-compose -f docker-compose.dev.yaml up -d
     ```
 
 5. Run database migrations:
+
     ```bash
     pnpm db:migrate
     ```
@@ -99,12 +109,14 @@ Creates a new user account.
 ```json
 {
     "user": {
-        "id": 1,
-        "email": "user@example.com"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "email": "user@example.com",
+        "subscription": "starter",
+        "avatarURL": "/avatars/1_1740692242338.jpg"
+    }
 }
 ```
+
+After registration, the server automatically downloads a Gravatar image (or default identicon) and stores it locally in `public/avatars`.
 
 **Validation rules:**
 
@@ -132,7 +144,9 @@ Authenticates user and returns JWT token.
 {
     "user": {
         "id": 1,
-        "email": "user@example.com"
+        "email": "user@example.com",
+        "subscription": "starter",
+        "avatarURL": "/avatars/1_1740692242338.jpg"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
@@ -168,10 +182,38 @@ Authorization: Bearer <token>
 
 ```json
 {
-    "id": 1,
-    "email": "user@example.com"
+    "email": "user@example.com",
+    "subscription": "starter",
+    "avatarURL": "/avatars/1_1740692242338.jpg"
 }
 ```
+
+#### Update user avatar
+
+**PATCH** `/api/auth/avatars`
+
+Uploads a new avatar image for the authenticated user.
+
+**Headers:**
+
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Form-data:**
+
+- `avatar` (required): image file (`jpg`, `png`, `gif`), max size `1MB`
+
+**Response:** `200 OK`
+
+```json
+{
+    "avatarURL": "/avatars/1_1740693324123.png"
+}
+```
+
+Avatars are publicly accessible via static files, for example: `http://localhost:3000/avatars/1_1740693324123.png`.
 
 ### Contacts
 
@@ -367,7 +409,8 @@ Removes a contact by ID.
 ├── app.js                        # Application entry point
 ├── config/
 │   ├── config.js                 # Sequelize database configuration
-│   └── jwtConfig.js              # JWT configuration
+│   ├── jwtConfig.js              # JWT configuration
+│   └── multerConfig.js           # Multer config for avatar uploads
 ├── controllers/
 │   ├── authControllers.js        # Authentication request handlers
 │   └── contactsControllers.js    # Contact request handlers
@@ -376,6 +419,7 @@ Removes a contact by ID.
 │   └── contactsRouter.js         # Contact routes
 ├── services/
 │   ├── authServices.js           # Authentication business logic
+│   ├── avatarServices.js         # Gravatar download and avatar helpers
 │   └── contactsServices.js       # Contact business logic
 ├── models/
 │   ├── index.js                  # Sequelize initialization
@@ -383,7 +427,8 @@ Removes a contact by ID.
 │   └── contact.js                # Contact model definition
 ├── migrations/
 │   ├── 20260210142425-create-users.cjs      # User table migration
-│   └── 20260211203950-create-contacts.cjs   # Contact table migration
+│   ├── 20260211203950-create-contacts.cjs   # Contact table migration
+│   └── 20260227120000-add-avatar-url-to-users.cjs # Adds avatarURL to users
 ├── seeders/
 │   ├── 20260210161908-users.cjs        # Sample user data
 │   └── 20260210161909-contacts.cjs     # Sample contact data
@@ -397,6 +442,9 @@ Removes a contact by ID.
 │   ├── validateBody.js           # Request body validation middleware
 │   └── validatePaginationParams.js  # Pagination validation
 ├── middleware/
+├── public/
+│   └── avatars/                  # Stored user avatars (served statically)
+├── temp/                         # Temporary upload directory
 └── docker-compose.dev.yaml       # Docker setup for PostgreSQL & pgAdmin
 ```
 
@@ -409,10 +457,12 @@ This project uses PostgreSQL database with Sequelize ORM. The development enviro
 #### 1. Database Setup with Docker Compose
 
 The `docker-compose.dev.yaml` file provides:
+
 - **PostgreSQL 18**: Main database server
 - **pgAdmin 4**: Web-based database administration tool
 
 Start the containers:
+
 ```bash
 # Using Docker
 docker-compose -f docker-compose.dev.yaml up -d
@@ -422,6 +472,7 @@ podman-compose -f docker-compose.dev.yaml up -d
 ```
 
 Stop the containers:
+
 ```bash
 docker-compose -f docker-compose.dev.yaml down
 # or
@@ -431,6 +482,8 @@ podman-compose -f docker-compose.dev.yaml down
 #### 2. Database Migrations
 
 Sequelize migrations manage database schema changes. Migrations are versioned and allow you to evolve your database schema over time.
+
+Current migrations include users, contacts, and `avatarURL` column for users.
 
 **Available migration commands:**
 
@@ -448,53 +501,56 @@ pnpm db:reset
 **Creating a new migration:**
 
 1. Generate a migration file:
-   ```bash
-   pnpm sequelize-cli migration:generate --name create-your-table
-   ```
+
+    ```bash
+    pnpm sequelize-cli migration:generate --name create-your-table
+    ```
 
 2. After generation, change the file extension to `.cjs` (CommonJS format)
 
 3. Edit the migration file to define your schema:
-   ```javascript
-   'use strict';
 
-   module.exports = {
-     async up(queryInterface, Sequelize) {
-       await queryInterface.createTable('YourTable', {
-         id: {
-           allowNull: false,
-           autoIncrement: true,
-           primaryKey: true,
-           type: Sequelize.INTEGER
-         },
-         // ... other fields
-         createdAt: {
-           allowNull: false,
-           type: Sequelize.DATE
-         },
-         updatedAt: {
-           allowNull: false,
-           type: Sequelize.DATE
-         }
-       });
-     },
+    ```javascript
+    "use strict";
 
-     async down(queryInterface, Sequelize) {
-       await queryInterface.dropTable('YourTable');
-     }
-   };
-   ```
+    module.exports = {
+        async up(queryInterface, Sequelize) {
+            await queryInterface.createTable("YourTable", {
+                id: {
+                    allowNull: false,
+                    autoIncrement: true,
+                    primaryKey: true,
+                    type: Sequelize.INTEGER,
+                },
+                // ... other fields
+                createdAt: {
+                    allowNull: false,
+                    type: Sequelize.DATE,
+                },
+                updatedAt: {
+                    allowNull: false,
+                    type: Sequelize.DATE,
+                },
+            });
+        },
+
+        async down(queryInterface, Sequelize) {
+            await queryInterface.dropTable("YourTable");
+        },
+    };
+    ```
 
 4. Run the migration:
-   ```bash
-   pnpm db:migrate
-   ```
+    ```bash
+    pnpm db:migrate
+    ```
 
 #### 3. Database Seeders
 
 Seeders populate the database with sample or initial data, useful for development and testing.
 
 **Run all seeders:**
+
 ```bash
 pnpm db:seed
 ```
@@ -502,49 +558,53 @@ pnpm db:seed
 **Creating a new seeder:**
 
 1. Generate a seeder file:
-   ```bash
-   pnpm sequelize-cli seed:generate --name your-seed-name
-   ```
+
+    ```bash
+    pnpm sequelize-cli seed:generate --name your-seed-name
+    ```
 
 2. Change the file extension to `.cjs`
 
 3. Edit the seeder file to insert data:
-   ```javascript
-   'use strict';
 
-   module.exports = {
-     async up(queryInterface, Sequelize) {
-       await queryInterface.bulkInsert('Contacts', [
-         {
-           name: 'John Doe',
-           email: 'john@example.com',
-           phone: '(123) 456-7890',
-           createdAt: new Date(),
-           updatedAt: new Date()
-         },
-         // ... more records
-       ]);
-     },
+    ```javascript
+    "use strict";
 
-     async down(queryInterface, Sequelize) {
-       await queryInterface.bulkDelete('Contacts', null, {});
-     }
-   };
-   ```
+    module.exports = {
+        async up(queryInterface, Sequelize) {
+            await queryInterface.bulkInsert("Contacts", [
+                {
+                    name: "John Doe",
+                    email: "john@example.com",
+                    phone: "(123) 456-7890",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+                // ... more records
+            ]);
+        },
+
+        async down(queryInterface, Sequelize) {
+            await queryInterface.bulkDelete("Contacts", null, {});
+        },
+    };
+    ```
 
 #### 4. Database Administration
 
 **Access pgAdmin:**
+
 1. Open browser to `http://localhost:5050` (or the port specified in `.env`)
 2. Login with credentials from `.env` file:
-   - Email: `PGADMIN_DEFAULT_EMAIL`
-   - Password: `PGADMIN_DEFAULT_PASSWORD`
+    - Email: `PGADMIN_DEFAULT_EMAIL`
+    - Password: `PGADMIN_DEFAULT_PASSWORD`
 3. Add a new server connection:
-   - Host: `postgres` (container name) or `localhost` (from host machine)
-   - Port: `5432`
-   - Username/Password: From `.env` file
+    - Host: `postgres` (container name) or `localhost` (from host machine)
+    - Port: `5432`
+    - Username/Password: From `.env` file
 
 **Direct PostgreSQL access:**
+
 ```bash
 # Using Docker
 docker exec -it postgres psql -U your_username -d contacts_db
@@ -586,29 +646,33 @@ When adding a new model:
 4. Run migrations to update database schema
 
 **Example model structure:**
+
 ```javascript
 export default (sequelize, DataTypes) => {
-  const YourModel = sequelize.define('YourModel', {
-    // Define fields here
-  });
-  
-  return YourModel;
+    const YourModel = sequelize.define("YourModel", {
+        // Define fields here
+    });
+
+    return YourModel;
 };
 ```
 
 #### 7. Troubleshooting
 
 **Database connection issues:**
+
 - Ensure Docker/Podman containers are running
 - Check `.env` file for correct credentials
 - Verify PostgreSQL port is not in use by another service
 
 **Migration errors:**
+
 - Check migration file syntax
 - Ensure previous migrations executed successfully
 - Try `pnpm db:migrate:undo` and reapply
 
 **Reset database completely:**
+
 ```bash
 # Stop containers and remove volumes
 podman-compose -f docker-compose.dev.yaml down -v
@@ -632,6 +696,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 ```
 
 **Security features:**
+
 - Limited file system read access to project directory
 - Environment variables for sensitive credentials
 - Database connection validation before server start
@@ -642,6 +707,10 @@ nodemon --permission --allow-fs-read=. ./app.js
 
 - ✅ RESTful API architecture
 - ✅ JWT user authentication (register, login, logout)
+- ✅ Current user endpoint with avatar URL
+- ✅ Automatic Gravatar download on registration
+- ✅ Avatar upload endpoint with multipart/form-data (`PATCH /api/auth/avatars`)
+- ✅ Static avatar hosting from `public/avatars`
 - ✅ User-based contact management
 - ✅ Full CRUD operations for contacts
 - ✅ Pagination support with customizable page size
@@ -659,10 +728,12 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Development Tools
 
 ### Backend Stack
+
 - **Express.js**: Web framework
 - **Sequelize**: PostgreSQL ORM
 - **JWT (jsonwebtoken)**: Token-based authentication
 - **bcrypt**: Password hashing
+- **Multer**: Multipart file upload handling for avatars
 - **PostgreSQL**: Relational database
 - **Joi**: Schema validation
 - **Morgan**: HTTP request logger
@@ -670,6 +741,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 - **dotenv**: Environment variable management
 
 ### Development Environment
+
 - **Nodemon**: Auto-reload during development
 - **Docker/Podman**: Container runtime
 - **pgAdmin**: Database administration interface
@@ -678,7 +750,7 @@ nodemon --permission --allow-fs-read=. ./app.js
 ## Example Usage with cURL
 
 ```bash
-# Registration
+# Registration (avatar is generated automatically from Gravatar)
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"securePassword123"}'
@@ -691,6 +763,11 @@ curl -X POST http://localhost:3000/api/auth/login \
 # Get current user (replace TOKEN with actual JWT token)
 curl http://localhost:3000/api/auth/current \
   -H "Authorization: Bearer TOKEN"
+
+# Upload custom avatar
+curl -X PATCH http://localhost:3000/api/auth/avatars \
+  -H "Authorization: Bearer TOKEN" \
+  -F "avatar=@/absolute/path/to/avatar.png"
 
 # Get all contacts with pagination
 curl "http://localhost:3000/api/contacts?page=1&limit=20" \
