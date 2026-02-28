@@ -14,8 +14,13 @@ export const loginSchema = Joi.object({
     password,
 });
 
+export const verificationEmailSchema = Joi.object({
+    email,
+});
+
 export default {
     registerSchema,
     loginSchema,
+    verificationEmailSchema,
     subscription,
 };
