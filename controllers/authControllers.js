@@ -82,10 +82,40 @@ export const updateAvatar = async (req, res, next) => {
     }
 };
 
+export const verifyEmail = async (req, res, next) => {
+    const { verificationToken } = req.params;
+
+    const result = await authService.verifyEmail(verificationToken);
+
+    if (!result) {
+        return next(HttpError(HTTP_STATUS_CODES.NOT_FOUND, "User not found"));
+    }
+
+    res.status(HTTP_STATUS_CODES.SUCCESS).json({
+        message: "Verification successful",
+    });
+};
+
+export const resendVerificationEmail = async (req, res, next) => {
+    const { email } = req.body;
+
+    const result = await authService.resendVerificationEmail(email);
+
+    if (!result) {
+        return next(HttpError(HTTP_STATUS_CODES.NOT_FOUND, "User not found"));
+    }
+
+    res.status(HTTP_STATUS_CODES.SUCCESS).json({
+        message: "Verification email sent",
+    });
+};
+
 export default {
     register,
     login,
     logout,
     getCurrentUser,
     updateAvatar,
+    verifyEmail,
+    resendVerificationEmail,
 };
